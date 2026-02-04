@@ -1,0 +1,6 @@
+Id	Car_Type	Description
+1	Hatchback	" Hatchbacks are compact cars. They are popular in India for their affordability, fuel efficiency, and ease of maneuverability in city traffic"
+2	Sedan	Sedans are passenger cars with a separate trunk and typically offer more comfort and space compared to hatchbacks. 
+3	SUV	"SUVs (Sport Utility Vehicles) are larger vehicles designed for both on-road and off-road use. They offer higher ground clearance, robust build, and spacious interiors, making them suitable for diverse terrains and family trips"
+3	SUV	"SUVs (Sport Utility Vehicles) are larger vehicles designed for both on-road and off-road use. They offer higher ground clearance, robust build, and spacious interiors, making them suitable for diverse terrains and family trips"
+4	Electric Car	" Electric cars are powered entirely by electricity, offering an eco-friendly alternative to traditional gasoline engines. They are gaining popularity in India due to their low carbon emissions, reduced noise pollution, and cost savings on fuel"
