@@ -7,8 +7,12 @@ import EnhancedDashboard from './pages/EnhancedDashboard';
 import PredictionPage from './pages/PredictionPage';
 import ReportPage from './pages/ReportPage';
 import TrainPage from './pages/TrainPage';
-import EnhancedPowerBIPage from './pages/EnhancedPowerBIPage';
-import DataPreprocessingPage from './pages/DataPreprocessingPage';
+import ImprovedPowerBIPage from './pages/ImprovedPowerBIPage';
+import ImprovedDataPreprocessingPage from './pages/ImprovedDataPreprocessingPage';
+import './styles/improved-pages.css';
+import PowerQueryPageClean from './pages/PowerQueryPageClean';
+import './styles/power-query.css';
+import './styles/train-page.css';
 
 function App() {
   return (
@@ -38,11 +42,12 @@ function App() {
               <Route path="/" element={<NewUploadPage />} />
               <Route path="/upload" element={<NewUploadPage />} />
               <Route path="/dashboard" element={<EnhancedDashboard />} />
-              <Route path="/preprocess" element={<DataPreprocessingPage />} />
+              <Route path="/preprocess" element={<ImprovedDataPreprocessingPage />} />
+              <Route path="/powerquery" element={<PowerQueryPageClean />} />
               <Route path="/train" element={<TrainPage />} />
               <Route path="/predict" element={<PredictionPage />} />
               <Route path="/report" element={<ReportPage />} />
-              <Route path="/powerbi" element={<EnhancedPowerBIPage />} />
+              <Route path="/powerbi" element={<ImprovedPowerBIPage />} />
             </Routes>
           </main>
         </div>

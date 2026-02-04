@@ -37,8 +37,15 @@ const NewSidebar = () => {
       path: '/preprocess', 
       iconName: 'SETTINGS',
       label: 'Data Preprocessing', 
-      description: 'Power Query-style cleaning',
+      description: 'Clean & transform data',
       badge: 'CLEAN'
+    },
+    { 
+      path: '/powerquery', 
+      iconName: 'TRANSFORM',
+      label: 'Power Query', 
+      description: 'Advanced data transformation',
+      badge: 'PRO'
     },
     { 
       path: '/dashboard', 

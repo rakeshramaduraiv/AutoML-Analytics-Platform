@@ -6,7 +6,7 @@ from flask_socketio import SocketIO, emit
 from models import db, Dataset, TrainingRun, PredictionJob
 from routes.upload import upload_bp
 from routes.analyze import analyze_bp
-from routes.train import train_bp
+from routes.train_simple import train_simple_bp
 from routes.predict_simple import predict_bp
 
 app = Flask(__name__)
@@ -27,7 +27,7 @@ with app.app_context():
 
 app.register_blueprint(upload_bp)
 app.register_blueprint(analyze_bp)
-app.register_blueprint(train_bp)
+app.register_blueprint(train_simple_bp)
 app.register_blueprint(predict_bp)
 
 @socketio.on('connect')
@@ -68,4 +68,4 @@ if __name__ == '__main__':
     host = os.environ.get('HOST', '0.0.0.0')
     debug = os.environ.get('FLASK_ENV') != 'production'
     
-    socketio.run(app, debug=debug, host=host, port=port)
+    socketio.run(app, debug=debug, host=host, port=port, allow_unsafe_werkzeug=True)

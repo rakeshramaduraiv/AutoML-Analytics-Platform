@@ -18,6 +18,19 @@ class QualityMetrics:
     ml_ready: bool
     blocking_issues: List[str]
     recommendations: List[str]
+    
+    def to_dict(self) -> dict:
+        """Convert to dictionary for JSON serialization"""
+        return {
+            'completeness_score': self.completeness_score,
+            'consistency_score': self.consistency_score,
+            'validity_score': self.validity_score,
+            'uniqueness_score': self.uniqueness_score,
+            'overall_score': self.overall_score,
+            'ml_ready': self.ml_ready,
+            'blocking_issues': self.blocking_issues,
+            'recommendations': self.recommendations
+        }
 
 class DataQualityEngine:
     """

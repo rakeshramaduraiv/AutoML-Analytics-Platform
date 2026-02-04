@@ -16,7 +16,7 @@ import {
   File, FileImage, FileSpreadsheet, FileText as FileDoc,
   // Additional Icons
   Lightbulb, Gauge, Timer, Cpu, Wrench, Eye, Edit3,
-  Bell, Bot, TreePine, Calculator, Scale, Trophy
+  Bell, Bot, TreePine, Calculator, Scale, Trophy, Shuffle
 } from 'lucide-react';
 
 // Icon mapping based on semantic meaning
@@ -35,6 +35,7 @@ export const ICONS = {
   REPORTS: FileText,
   POWERBI: PieChart,
   SETTINGS: Settings,
+  TRANSFORM: Shuffle,
 
   // Status Indicators
   SUCCESS: CheckCircle,

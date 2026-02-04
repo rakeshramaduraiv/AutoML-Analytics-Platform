@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
-import { getUploadInfo, getDatasetStatus } from '../utils/uploadUtils';
 import { 
   Upload, FileText, Settings, RotateCcw, Zap, Target, 
   Trophy, Timer, CheckCircle, Clock, BarChart3, Activity,
   AlertTriangle, Info, Brain, TrendingUp, Database,
-  Play, RefreshCw, Download
+  Play, Pause, RefreshCw, Download, Eye
 } from 'lucide-react';
-import '../styles/train-page.css';
 
 const TrainPage = () => {
   const [uploadResult, setUploadResult] = useState(null);
@@ -30,24 +28,13 @@ const TrainPage = () => {
     // Load upload result from localStorage
     const stored = localStorage.getItem('uploadResult');
     if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        console.log('Loaded upload result:', parsed);
-        setUploadResult(parsed);
-      } catch (error) {
-        console.error('Error parsing upload result:', error);
-      }
+      setUploadResult(JSON.parse(stored));
     }
     
     // Load previous training result if exists
     const storedTraining = localStorage.getItem('trainingResult');
     if (storedTraining) {
-      try {
-        const parsedTraining = JSON.parse(storedTraining);
-        setTrainingResult(parsedTraining);
-      } catch (error) {
-        console.error('Error parsing training result:', error);
-      }
+      setTrainingResult(JSON.parse(storedTraining));
     }
   }, []);
 
@@ -93,16 +80,11 @@ const TrainPage = () => {
   };
 
   const startTraining = async () => {
-    const uploadInfo = getUploadInfo(uploadResult);
-    const datasetStatus = getDatasetStatus(uploadResult);
-    
-    if (datasetStatus.status !== 'ready') {
-      setError(`Cannot start training: ${datasetStatus.message}`);
+    if (!uploadResult) {
+      setError('No dataset available. Please upload a file first.');
       return;
     }
     
-    console.log('Starting training with:', { uploadResult, uploadInfo });
-
     setIsTraining(true);
     setTrainingProgress(0);
     setTrainingStage('Initializing');
@@ -113,10 +95,10 @@ const TrainPage = () => {
     const progressInterval = simulateTrainingProgress();
     
     try {
-      console.log('Calling API with filename:', uploadInfo.filename);
+      console.log('Starting training with filename:', uploadResult.filename);
       
-      // Call actual training API with the filename
-      const result = await apiService.trainModel(uploadInfo.filename);
+      // Call actual training API
+      const result = await apiService.trainModel(uploadResult.filename, trainingConfig);
       
       console.log('Training completed successfully:', result);
       
@@ -213,31 +195,27 @@ const TrainPage = () => {
         <div className="card-header">
           <h3><FileText size={24} />Training Dataset</h3>
           <div className="dataset-status">
-            <span className={`status-dot ${getDatasetStatus(uploadResult).status}`} style={{backgroundColor: getDatasetStatus(uploadResult).color}}></span>
-            <span>{getDatasetStatus(uploadResult).message}</span>
+            <span className="status-dot ready"></span>
+            <span>Ready for Training</span>
           </div>
         </div>
         
         <div className="dataset-details">
           <div className="detail-item">
             <span className="label">File:</span>
-            <span className="value">{getUploadInfo(uploadResult).filename}</span>
+            <span className="value">{uploadResult.filename}</span>
           </div>
           <div className="detail-item">
             <span className="label">Type:</span>
-            <span className="value">{getUploadInfo(uploadResult).fileType}</span>
+            <span className="value">{uploadResult.document_type || uploadResult.file_type}</span>
           </div>
           <div className="detail-item">
             <span className="label">Records:</span>
-            <span className="value">{getUploadInfo(uploadResult).rows}</span>
+            <span className="value">{uploadResult.rows?.toLocaleString() || 'N/A'}</span>
           </div>
           <div className="detail-item">
             <span className="label">Features:</span>
-            <span className="value">{getUploadInfo(uploadResult).columns}</span>
-          </div>
-          <div className="detail-item">
-            <span className="label">Size:</span>
-            <span className="value">{getUploadInfo(uploadResult).size}</span>
+            <span className="value">{uploadResult.columns || 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -344,7 +322,7 @@ const TrainPage = () => {
           >
             {isTraining ? (
               <>
-                <RotateCcw size={18} className="spinning" />
+                <RotateCw size={18} className="spinning" />
                 Training in Progress...
               </>
             ) : (

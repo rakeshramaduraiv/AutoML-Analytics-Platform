@@ -9,6 +9,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js';
 import { Bar, Scatter } from 'react-chartjs-2';
 
@@ -21,7 +22,8 @@ ChartJS.register(
   PointElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const Charts = ({ datasetMetadata, datasetPreview }) => {
