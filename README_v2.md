@@ -2,7 +2,7 @@
 
 **Enterprise-grade machine learning platform with governance compliance, auditable decision logs, and modular file processing architecture.**
 
-## 🚀 Enterprise Features (v2.0)
+##  Enterprise Features (v2.0)
 
 ### **Modular File Processing Architecture**
 Honest processing capabilities with transparent depth per file type:
@@ -215,10 +215,7 @@ AutoML-Analytics-Platform/
 - ✅ **Transparent**: Honest processing capabilities per format
 - ✅ **Scalable**: Async-ready architecture for production
 
-## 📞 Contact
+## Contact
 
 Built with enterprise-grade practices and governance compliance in mind. Demonstrates senior-level ML engineering with honest capabilities and auditable decision-making.
 
----
-
-*AutoML Analytics Platform v2.0 - Where Enterprise ML meets Governance Compliance*

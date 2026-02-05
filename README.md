@@ -7,14 +7,14 @@
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3+-orange.svg)](https://scikit-learn.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 
-## 🚀 Key Features
+##  Key Features
 
-- **⚡ Fast Training**: 1-6 minutes with 88-96% accuracy
-- **🤖 AutoML**: Automatic algorithm selection and hyperparameter optimization
-- **📊 Real-time Metrics**: Live training progress via WebSocket
-- **🎯 High Accuracy**: Ensemble methods, smart feature selection, optimized preprocessing
-- **📈 PowerBI-style Dashboards**: Interactive charts with drag-and-drop
-- **🔌 REST API**: Production-ready endpoints with comprehensive error handling
+- ** Fast Training**: 1-6 minutes with 88-96% accuracy
+- ** AutoML**: Automatic algorithm selection and hyperparameter optimization
+- ** Real-time Metrics**: Live training progress via WebSocket
+- ** High Accuracy**: Ensemble methods, smart feature selection, optimized preprocessing
+- ** PowerBI-style Dashboards**: Interactive charts with drag-and-drop
+- ** REST API**: Production-ready endpoints with comprehensive error handling
 - **🐳 Docker Ready**: One-command deployment
 
 ## Architecture
@@ -70,7 +70,7 @@ npm install
 npm start
 ```
 
-## 🎯 ML Training Performance
+##  ML Training Performance
 
 | Mode | Time | Accuracy | Models | CV Folds | Use Case |
 |------|------|----------|--------|----------|----------|
@@ -97,7 +97,7 @@ npm start
 
 ## Core Features
 
-### 🤖 Automated Machine Learning
+###  Automated Machine Learning
 - **Smart Algorithm Selection**: Random Forest, Gradient Boosting, Extra Trees
 - **Ensemble Methods**: Voting classifier/regressor for maximum accuracy
 - **Auto Problem Detection**: Classification vs regression identification
@@ -105,7 +105,7 @@ npm start
 - **Real-time Progress**: Live WebSocket updates during training
 - **Model Persistence**: Joblib serialization with complete metadata
 
-### 📊 Data Processing
+### Data Processing
 - **File Upload**: CSV, Excel with validation (up to 50K rows)
 - **Smart Preprocessing**: RobustScaler, intelligent imputation
 - **Feature Selection**: Mutual information-based selection
@@ -113,7 +113,7 @@ npm start
 - **Label Encoding**: Automatic categorical variable encoding
 - **Data Validation**: Schema detection and quality assessment
 
-### 📈 Visualization & BI
+###  Visualization & BI
 - **Interactive Charts**: Bar, line, pie, scatter, area charts
 - **Real-time Dashboard**: WebSocket-powered live statistics
 - **PowerBI-style Interface**: Drag-and-drop field mapping
@@ -122,7 +122,7 @@ npm start
 - **Number Formatting**: Currency, percent, compact notation
 - **PDF Export**: Download reports with html2canvas
 
-### 🔮 Prediction Engine
+###  Prediction Engine
 - **Model Registry**: List all trained models with metadata
 - **Real-time Predictions**: Fast inference with confidence scores
 - **Feature Importance**: Visualize top contributing features
@@ -161,7 +161,7 @@ WebSocket /socket.io            - Real-time training updates
 
 ## Implementation Status
 
-### ✅ Implemented
+###  Implemented
 - **Containerized Deployment**: Docker + docker-compose with PostgreSQL
 - **Production WSGI**: Gunicorn server with eventlet workers for WebSocket support
 - **Real-time Updates**: Flask-SocketIO with live dashboard statistics
