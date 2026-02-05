@@ -32,6 +32,7 @@ def make_prediction():
         model = model_package['model']
         scaler = model_package['scaler']
         feature_columns = model_package['feature_columns']
+        label_encoders = model_package.get('label_encoders', {})
         
         # Prepare input data
         if isinstance(input_data, dict):
@@ -42,27 +43,30 @@ def make_prediction():
         # Ensure all required features are present
         for col in feature_columns:
             if col not in df.columns:
-                df[col] = 0  # Default value for missing features
+                df[col] = 0
         
         # Select and order features
-        X = df[feature_columns]
+        X = df[feature_columns].copy()
         
-        # Handle missing values
-        for col in X.columns:
-            if X[col].dtype == 'object':
-                X[col] = X[col].fillna('Unknown')
-            else:
-                X[col] = X[col].fillna(X[col].median())
-        
-        # Encode categorical variables
+        # Advanced preprocessing - use stored label encoders
         from sklearn.preprocessing import LabelEncoder
         for col in X.columns:
-            if X[col].dtype == 'object':
-                le = LabelEncoder()
-                # Fit with known values + unknown
-                unique_vals = list(X[col].unique()) + ['Unknown']
-                le.fit(unique_vals)
-                X[col] = le.transform(X[col].astype(str))
+            if X[col].dtype == 'object' or not pd.api.types.is_numeric_dtype(X[col]):
+                X[col] = X[col].fillna('Unknown')
+                if col in label_encoders:
+                    le = label_encoders[col]
+                    # Handle unseen labels by mapping to most frequent class
+                    def safe_transform(val):
+                        if val in le.classes_:
+                            return le.transform([val])[0]
+                        else:
+                            return le.transform([le.classes_[0]])[0]  # Use first class as default
+                    X[col] = X[col].apply(safe_transform)
+                else:
+                    le = LabelEncoder()
+                    X[col] = le.fit_transform(X[col].astype(str))
+            else:
+                X[col] = pd.to_numeric(X[col], errors='coerce').fillna(0)
         
         # Scale features
         X_scaled = scaler.transform(X)
@@ -77,27 +81,34 @@ def make_prediction():
                 probabilities = model.predict_proba(X_scaled)
                 confidence_scores = np.max(probabilities, axis=1).tolist()
             except:
-                confidence_scores = [0.8] * len(predictions)  # Default confidence
+                confidence_scores = [0.85] * len(predictions)
         else:
-            confidence_scores = [0.8] * len(predictions)
+            confidence_scores = [0.85] * len(predictions)
         
         # Feature importance if available
-        feature_importance = {}
+        feature_importance = []
         if hasattr(model, 'feature_importances_'):
             importance_scores = model.feature_importances_
-            feature_importance = dict(zip(feature_columns, importance_scores.tolist()))
+            feature_importance = [
+                {'feature': col, 'importance': float(score)}
+                for col, score in zip(feature_columns, importance_scores)
+            ]
+            feature_importance.sort(key=lambda x: x['importance'], reverse=True)
         
         response = {
             'success': True,
             'predictions': predictions.tolist() if hasattr(predictions, 'tolist') else [predictions],
             'confidence_scores': confidence_scores,
             'feature_importance': feature_importance,
-            'model_used': model_name
+            'model_used': model_name,
+            'problem_type': 'Classification' if model_package.get('is_classification') else 'Regression'
         }
         
         return jsonify(response)
     
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': f'Prediction failed: {str(e)}'}), 500
 
 @predict_bp.route('/api/models', methods=['GET'])

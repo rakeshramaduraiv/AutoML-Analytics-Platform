@@ -36,12 +36,10 @@ const UploadPage = () => {
 
   // Handle file selection
   const handleFileSelect = (file) => {
-    if (file && file.type === 'text/csv') {
+    if (file) {
       setSelectedFile(file);
       setError(null);
       setUploadResult(null);
-    } else {
-      setError('Please select a valid CSV file');
     }
   };
 
@@ -55,7 +53,7 @@ const UploadPage = () => {
   // Handle file upload
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError('Please select a CSV file first');
+      setError('Please select a file first');
       return;
     }
 
@@ -64,10 +62,25 @@ const UploadPage = () => {
 
     try {
       const result = await apiService.uploadDataset(selectedFile);
-      setUploadResult(result);
-      localStorage.setItem('uploadResult', JSON.stringify(result));
       
-      // Trigger storage event for sidebar stats update
+      // Normalize the response to a consistent format
+      const normalized = {
+        filename: result.filename || selectedFile.name,
+        file_type: result.document_type || result.file_type || result.type || 'csv',
+        rows: result.rows || result.number_of_rows || result.structured_data?.rows || 0,
+        columns: result.columns || result.number_of_columns || result.column_names?.length || result.structured_data?.columns || 0,
+        column_names: result.column_names || result.structured_data?.column_names || [],
+        inferred_column_types: result.inferred_column_types || result.data_types || {},
+        file_size: result.file_size_bytes || result.size_bytes || result.file_size || selectedFile.size,
+        number_of_rows: result.rows || result.number_of_rows || result.structured_data?.rows || 0,
+        number_of_columns: result.columns || result.number_of_columns || result.column_names?.length || result.structured_data?.columns || 0
+      };
+      
+      console.log('Normalized upload result:', normalized);
+      
+      setUploadResult(normalized);
+      localStorage.setItem('uploadResult', JSON.stringify(normalized));
+      
       window.dispatchEvent(new Event('storage'));
     } catch (err) {
       setError(err.response?.data?.error || 'Upload failed. Please try again.');
@@ -106,9 +119,9 @@ const UploadPage = () => {
                   <h4>Drag & drop your CSV file here</h4>
                   <p>or click to browse files</p>
                   <div className="upload-requirements">
-                    <small>• Supported format: CSV (.csv)</small>
+                    <small>• Supported: CSV, Excel, JSON, PDF, DOCX, Images</small>
                     <small>• Maximum size: 16MB</small>
-                    <small>• Include column headers</small>
+                    <small>• ML training: CSV/Excel only</small>
                   </div>
                 </>
               ) : (
@@ -125,7 +138,7 @@ const UploadPage = () => {
             
             <input
               type="file"
-              accept=".csv"
+              accept=".csv,.xlsx,.xls,.json,.txt,.pdf,.docx,.png,.jpg,.jpeg"
               onChange={handleFileChange}
               className="file-input"
               disabled={uploading}

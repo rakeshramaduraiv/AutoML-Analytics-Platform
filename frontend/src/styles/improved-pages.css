@@ -9,10 +9,6 @@
 
 .powerbi-workspace {
   flex: 1;
-  display: grid;
-  grid-template-columns: 350px 1fr;
-  gap: 1px;
-  background: #e1e5e9;
   overflow: hidden;
 }
 
@@ -637,4 +633,644 @@
   padding: 4px 8px;
   background: #F3F4F6;
   border-radius: 4px;
+}
+
+/* Chart Controls */
+.chart-controls {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.chart-controls h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #1F2937;
+}
+
+.chart-toggles {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.chart-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 2px solid #E5E7EB;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  color: #6B7280;
+}
+
+.chart-toggle:hover {
+  border-color: #3B82F6;
+  color: #3B82F6;
+}
+
+.chart-toggle.active {
+  border-color: #3B82F6;
+  background: #EFF6FF;
+  color: #3B82F6;
+}
+
+.chart-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+}
+
+/* Live Charts Grid */
+.live-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 20px;
+}
+
+.chart-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chart-card .chart-header {
+  padding: 16px;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F9FAFB;
+}
+
+.chart-card .chart-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #1F2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-card .chart-content {
+  padding: 20px;
+  min-height: 300px;
+}
+
+/* View Switcher */
+.view-switcher {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0;
+  padding: 0 20px;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: 2px solid #E5E7EB;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 15px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+.view-btn:hover {
+  border-color: #3B82F6;
+  color: #3B82F6;
+}
+
+.view-btn.active {
+  border-color: #3B82F6;
+  background: #3B82F6;
+  color: white;
+}
+
+/* Model View */
+.model-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: white;
+}
+
+.model-header {
+  padding: 20px;
+  flex-shrink: 0;
+}
+
+.model-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  color: #1F2937;
+}
+
+.model-header p {
+  margin: 0;
+  color: #6B7280;
+  font-size: 14px;
+}
+
+.model-canvas {
+  background: #F9FAFB;
+  border: 2px dashed #D1D5DB;
+  border-radius: 8px;
+  padding: 40px;
+  min-height: 500px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.model-canvas-interactive {
+  position: relative;
+  background: #F9FAFB;
+  border: 2px dashed #D1D5DB;
+  border-radius: 8px;
+  flex: 1;
+  overflow: auto;
+  cursor: default;
+  margin: 0 20px 20px 20px;
+}
+
+.relationship-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.model-table-draggable {
+  position: absolute;
+  background: white;
+  border: 1px solid #D1D5DB;
+  border-radius: 4px;
+  min-width: 300px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+}
+
+.table-header-powerbi {
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #F9FAFB 0%, #F3F4F6 100%);
+  border-bottom: 2px solid #3B82F6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: move;
+  user-select: none;
+}
+
+.table-header-powerbi h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1F2937;
+  flex: 1;
+}
+
+.table-columns-powerbi {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.model-table {
+  background: white;
+  border: 2px solid #3B82F6;
+  border-radius: 8px;
+  min-width: 300px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table-header {
+  padding: 16px;
+  background: #3B82F6;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-header h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.column-count {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.table-columns {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.column-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.column-item:last-child {
+  border-bottom: none;
+}
+
+.column-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.column-name {
+  font-size: 14px;
+  color: #1F2937;
+  font-weight: 500;
+}
+
+.key-badge {
+  background: #FCD34D;
+  color: #92400E;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.column-type {
+  font-size: 12px;
+  color: #6B7280;
+  background: #F3F4F6;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Report Builder View */
+.report-builder-view {
+  height: 100%;
+  background: white;
+  overflow: hidden;
+}
+
+.builder-workspace {
+  display: grid;
+  grid-template-columns: 250px 1fr 300px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.builder-left {
+  border-right: 1px solid #E5E7EB;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100%;
+}
+
+.builder-left::-webkit-scrollbar {
+  width: 8px;
+}
+
+.builder-left::-webkit-scrollbar-track {
+  background: #F9FAFB;
+}
+
+.builder-left::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+
+.builder-left::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+.visual-gallery {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.gallery-header {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+.gallery-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #1F2937;
+}
+
+.gallery-header p {
+  margin: 0 0 12px 0;
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.builder-center {
+  display: flex;
+  flex-direction: column;
+  background: #F9FAFB;
+}
+
+.builder-header {
+  padding: 16px;
+  background: white;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.builder-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #1F2937;
+}
+
+.builder-right {
+  border-left: 1px solid #E5E7EB;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.builder-right::-webkit-scrollbar {
+  width: 8px;
+}
+
+.builder-right::-webkit-scrollbar-track {
+  background: #F9FAFB;
+}
+
+.builder-right::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+
+.builder-right::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+.column-item-interactive {
+  padding: 10px 12px;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.column-item-interactive:last-child {
+  border-bottom: none;
+}
+
+.connect-btn {
+  background: #EFF6FF;
+  border: 1px solid #3B82F6;
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #3B82F6;
+  transition: all 0.2s;
+}
+
+.connect-btn:hover {
+  background: #3B82F6;
+  color: white;
+}
+
+.connection-hint {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3B82F6;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.column-type-badge {
+  background: #F3F4F6;
+  color: #6B7280;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.key-icon {
+  flex-shrink: 0;
+}
+
+.delete-relationship-btn {
+  background: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #EF4444;
+  border-radius: 50%;
+}
+
+.delete-relationship-btn:hover {
+  background: #FEE2E2;
+}
+
+.cardinality-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  z-index: 1000;
+  min-width: 280px;
+}
+
+.cardinality-menu h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #1F2937;
+}
+
+.cardinality-menu button {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border: 1px solid #E5E7EB;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.cardinality-menu button:hover {
+  background: #F9FAFB;
+  border-color: #3B82F6;
+}
+
+.cardinality-menu .cancel-btn {
+  background: #F3F4F6;
+  color: #6B7280;
+  margin-top: 8px;
+}
+
+.cardinality-icon {
+  font-weight: 700;
+  color: #3B82F6;
+  font-family: monospace;
+  font-size: 16px;
+}
+
+.relationship-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.relationship-layer path {
+  pointer-events: stroke;
+}
+
+/* PowerBI Report View */
+.report-view-powerbi {
+  background: #F3F4F6;
+  height: calc(100vh - 250px);
+  display: flex;
+  flex-direction: column;
+}
+
+.report-canvas-powerbi {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.report-page {
+  background: white;
+  min-height: 720px;
+  width: 1280px;
+  margin: 0 auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.report-visuals-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: repeat(12, 60px);
+  gap: 0;
+  height: 100%;
+  padding: 0;
+}
+
+.report-visual-container {
+  background: white;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.report-visual-container:hover {
+  box-shadow: 0 0 0 2px #3B82F6;
+  z-index: 10;
+}
+
+.visual-header-bar {
+  padding: 8px 12px;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 36px;
+}
+
+.visual-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.visual-content-area {
+  flex: 1;
+  padding: 12px;
+  overflow: hidden;
+}
+
+/* Live Training Metrics */
+.live-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+  padding: 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+}
+
+.live-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.live-metric .metric-label {
+  font-size: 11px;
+  color: #6B7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.live-metric .metric-value {
+  font-size: 16px;
+  color: #1F2937;
+  font-weight: 700;
+}
+
+.live-metric .metric-value.highlight {
+  color: #10B981;
+  font-size: 18px;
 }

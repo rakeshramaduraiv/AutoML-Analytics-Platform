@@ -1,8 +1,9 @@
 import axios from 'axios';
+import io from 'socket.io-client';
 
 // API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-const TIMEOUT = 60000; // 60 seconds
+const TIMEOUT = 600000; // 10 minutes for ML training
 
 // Create axios instance
 const api = axios.create({
@@ -11,6 +12,14 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
+});
+
+// Create socket connection
+const socket = io(API_BASE_URL, {
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionAttempts: 5
 });
 
 // Request interceptor
@@ -55,6 +64,9 @@ export const uploadDataset = async (file, onProgress = null) => {
 // API service with comprehensive functionality
 export const apiService = {
   
+  // Socket connection
+  socket: socket,
+  
   // System health and monitoring
   healthCheck: async () => {
     const response = await api.get('/health');
@@ -77,12 +89,19 @@ export const apiService = {
     const response = await api.post('/api/train', { 
       filename,
       ...config
+    }, {
+      timeout: 600000 // 10 minutes for training
     });
     return response.data;
   },
 
   listModels: async () => {
     const response = await api.get('/api/models');
+    return response.data;
+  },
+
+  deleteModel: async (modelName) => {
+    const response = await api.delete(`/api/models/${modelName}`);
     return response.data;
   },
 

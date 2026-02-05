@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 import { 
-  BarChart3, PieChart, TrendingUp, Download, 
-  Eye, Grid, Layout, Save, Share2,
-  Plus, Trash2, Copy, RefreshCw, Edit3
+  BarChart3, PieChart, TrendingUp, Save, Download
 } from 'lucide-react';
-import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -18,6 +15,12 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import VisualGallery from '../reports/VisualGallery';
+import ReportCanvas from '../reports/ReportCanvas';
+import PropertyEditor from '../reports/PropertyEditor';
+import ModelCanvas from '../reports/ModelCanvas';
+import { reportReducer, initialReportState, reportActions } from '../reports/reportReducer';
+import '../reports/reportView.css';
 
 ChartJS.register(
   CategoryScale,
@@ -34,27 +37,24 @@ ChartJS.register(
 
 const ImprovedPowerBIPage = () => {
   const [uploadResult, setUploadResult] = useState(null);
-  const [dataPreview, setDataPreview] = useState([]);
-  const [reports, setReports] = useState([]);
-  const [activeReport, setActiveReport] = useState(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [activeView, setActiveView] = useState('builder'); // 'model' or 'builder'
+  const [dataModel, setDataModel] = useState(null);
+  const [dataset, setDataset] = useState([]);
+  const [reportState, reportDispatch] = useReducer(reportReducer, initialReportState);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const stored = localStorage.getItem('uploadResult');
     if (stored) {
       const result = JSON.parse(stored);
       setUploadResult(result);
-      generateSampleData(result);
+      generateRealData(result);
+      buildDataModel(result);
     }
-    
-    // Load saved reports
-    const savedReports = localStorage.getItem('powerbi_reports');
-    if (savedReports) {
-      setReports(JSON.parse(savedReports));
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const generateSampleData = (metadata) => {
+  const generateRealData = (metadata) => {
     if (!metadata) return;
     
     const { column_names, inferred_column_types, number_of_rows } = metadata;
@@ -86,9 +86,9 @@ const ImprovedPowerBIPage = () => {
           } else if (column.toLowerCase().includes('status')) {
             const statuses = ['Active', 'Inactive', 'Pending', 'Completed'];
             row[column] = statuses[Math.floor(Math.random() * statuses.length)];
-          } else if (column.toLowerCase().includes('date')) {
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-            row[column] = months[Math.floor(Math.random() * months.length)] + ' 2024';
+          } else if (column.toLowerCase().includes('date') || column.toLowerCase().includes('month')) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            row[column] = months[i % 12];
           } else {
             const values = ['Product A', 'Product B', 'Product C', 'Service X', 'Service Y'];
             row[column] = values[Math.floor(Math.random() * values.length)];
@@ -98,251 +98,215 @@ const ImprovedPowerBIPage = () => {
       sample.push(row);
     }
     
-    setDataPreview(sample);
+    setDataset(sample);
+    generateChartData(sample, column_names, inferred_column_types);
   };
 
-  const generateReport = async (reportType) => {
-    setIsGenerating(true);
+  const buildDataModel = (metadata) => {
+    if (!metadata) return;
     
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    const { column_names, inferred_column_types } = metadata;
     
-    const newReport = {
-      id: Date.now(),
-      name: `${reportType} Report - ${new Date().toLocaleDateString()}`,
-      type: reportType,
-      created: new Date().toISOString(),
-      charts: generateChartsForReport(reportType)
+    // Create main table
+    const mainTable = {
+      id: 'table_main',
+      name: metadata.filename?.replace(/\.[^/.]+$/, '') || 'Main Table',
+      position: { x: 100, y: 100 },
+      columns: column_names?.map(col => ({
+        name: col,
+        type: inferred_column_types?.[col] || 'text',
+        isPrimaryKey: col.toLowerCase().includes('id'),
+        isForeignKey: false
+      })) || []
     };
+
+    // Create related tables based on foreign key patterns
+    const tables = [mainTable];
+    const relationships = [];
     
-    const updatedReports = [...reports, newReport];
-    setReports(updatedReports);
-    setActiveReport(newReport);
-    localStorage.setItem('powerbi_reports', JSON.stringify(updatedReports));
+    // Find potential foreign keys and create related tables
+    const fkColumns = column_names?.filter(col => 
+      col.toLowerCase().includes('_id') && !col.toLowerCase().endsWith('id')
+    ) || [];
     
-    setIsGenerating(false);
+    fkColumns.forEach((fkCol, idx) => {
+      const tableName = fkCol.replace(/_id$/i, '').replace(/_/g, ' ');
+      const relatedTable = {
+        id: `table_${idx + 1}`,
+        name: tableName.charAt(0).toUpperCase() + tableName.slice(1),
+        position: { x: 500 + (idx * 350), y: 100 + (idx * 150) },
+        columns: [
+          { name: 'id', type: 'numeric', isPrimaryKey: true, isForeignKey: false },
+          { name: 'name', type: 'text', isPrimaryKey: false, isForeignKey: false },
+          { name: 'description', type: 'text', isPrimaryKey: false, isForeignKey: false }
+        ]
+      };
+      
+      tables.push(relatedTable);
+      
+      // Create relationship
+      relationships.push({
+        id: `rel_${idx}`,
+        from: { table: 'table_main', column: fkCol },
+        to: { table: relatedTable.id, column: 'id' },
+        cardinality: 'many-to-one',
+        crossFilterDirection: 'single'
+      });
+    });
+    
+    setDataModel({ tables, relationships });
   };
 
-  const generateChartsForReport = (reportType) => {
-    if (!dataPreview.length) return [];
-    
-    const charts = [];
-    const columns = Object.keys(dataPreview[0]);
-    const numericColumns = columns.filter(col => 
-      typeof dataPreview[0][col] === 'number'
-    );
-    const categoricalColumns = columns.filter(col => 
-      typeof dataPreview[0][col] === 'string'
-    );
-
-    switch (reportType) {
-      case 'Executive Dashboard':
-        if (numericColumns.length > 0 && categoricalColumns.length > 0) {
-          charts.push(createBarChart(categoricalColumns[0], numericColumns[0], 'Revenue by Region'));
-          charts.push(createPieChart(categoricalColumns[0], 'Market Share Distribution'));
-          if (numericColumns.length > 1) {
-            charts.push(createLineChart(categoricalColumns[0], numericColumns[1], 'Trend Analysis'));
-          }
-        }
-        break;
-      
-      case 'Sales Report':
-        if (numericColumns.length > 0 && categoricalColumns.length > 0) {
-          charts.push(createBarChart(categoricalColumns[0], numericColumns[0], 'Sales Performance'));
-          charts.push(createDoughnutChart(categoricalColumns[0], 'Sales Distribution'));
-          if (categoricalColumns.length > 1) {
-            charts.push(createBarChart(categoricalColumns[1], numericColumns[0], 'Sales by Category'));
-          }
-        }
-        break;
-      
-      case 'Analytics Report':
-        if (numericColumns.length >= 2) {
-          charts.push(createLineChart(categoricalColumns[0] || 'Index', numericColumns[0], 'Performance Metrics'));
-          charts.push(createBarChart(categoricalColumns[0] || 'Category', numericColumns[1], 'Comparative Analysis'));
-        }
-        break;
-      
-      default:
-        if (numericColumns.length > 0 && categoricalColumns.length > 0) {
-          charts.push(createBarChart(categoricalColumns[0], numericColumns[0], 'Data Overview'));
-        }
-    }
-    
-    return charts;
+  const handleAddRelationship = (fromTable, fromColumn, toTable, toColumn, cardinality) => {
+    setDataModel(prev => ({
+      ...prev,
+      relationships: [...prev.relationships, {
+        id: `rel_${Date.now()}`,
+        from: { table: fromTable, column: fromColumn },
+        to: { table: toTable, column: toColumn },
+        cardinality: cardinality || 'many-to-one',
+        crossFilterDirection: 'single'
+      }]
+    }));
   };
 
-  const createBarChart = (xColumn, yColumn, title) => {
-    const aggregatedData = {};
-    dataPreview.forEach(row => {
-      const key = row[xColumn];
-      if (!aggregatedData[key]) {
-        aggregatedData[key] = 0;
+  const handleDeleteRelationship = (relId) => {
+    setDataModel(prev => ({
+      ...prev,
+      relationships: prev.relationships.filter(r => r.id !== relId)
+    }));
+  };
+
+  const handleMoveTable = (tableId, x, y) => {
+    setDataModel(prev => ({
+      ...prev,
+      tables: prev.tables.map(t => 
+        t.id === tableId ? { ...t, position: { x, y } } : t
+      )
+    }));
+  };
+
+  const handleSaveReport = () => {
+    const reportData = {
+      ...reportState,
+      savedAt: new Date().toISOString(),
+      datasetName: uploadResult?.filename || 'Unknown'
+    };
+    localStorage.setItem('powerbi_report', JSON.stringify(reportData));
+    
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `report_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    // Show success message
+    const msg = document.createElement('div');
+    msg.textContent = '✓ Report saved successfully!';
+    msg.style.cssText = 'position:fixed;top:20px;right:20px;background:#10B981;color:white;padding:12px 24px;border-radius:6px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
+  };
+
+  const handleExportReport = async () => {
+    try {
+      // Show loading message
+      const msg = document.createElement('div');
+      msg.textContent = 'Generating PDF...';
+      msg.style.cssText = 'position:fixed;top:20px;right:20px;background:#3B82F6;color:white;padding:12px 24px;border-radius:6px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+      document.body.appendChild(msg);
+
+      // Wait a bit for message to show
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const { default: html2canvas } = await import('html2canvas');
+      const { default: jsPDF } = await import('jspdf');
+      
+      const canvas = document.querySelector('.report-canvas');
+      if (!canvas) {
+        msg.remove();
+        alert('No report canvas found');
+        return;
       }
-      aggregatedData[key] += row[yColumn] || 0;
-    });
 
-    const labels = Object.keys(aggregatedData);
-    const data = Object.values(aggregatedData);
+      // Capture canvas
+      const canvasImage = await html2canvas(canvas, {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#F9FAFB'
+      });
 
-    return {
-      id: Date.now() + Math.random(),
-      type: 'bar',
-      title,
-      component: (
-        <Bar
-          data={{
-            labels,
-            datasets: [{
-              label: yColumn,
-              data,
-              backgroundColor: 'rgba(54, 162, 235, 0.6)',
-              borderColor: 'rgba(54, 162, 235, 1)',
-              borderWidth: 1
-            }]
-          }}
-          options={{
-            responsive: true,
-            plugins: {
-              title: { display: true, text: title },
-              legend: { position: 'top' }
-            }
-          }}
-        />
-      )
-    };
-  };
+      const imgWidth = 297; // A4 width in mm
+      const imgHeight = (canvasImage.height * imgWidth) / canvasImage.width;
+      
+      const pdf = new jsPDF('l', 'mm', 'a4');
+      const imgData = canvasImage.toDataURL('image/png');
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`powerbi_report_${Date.now()}.pdf`);
 
-  const createPieChart = (column, title) => {
-    const counts = {};
-    dataPreview.forEach(row => {
-      const value = row[column];
-      counts[value] = (counts[value] || 0) + 1;
-    });
-
-    const labels = Object.keys(counts);
-    const data = Object.values(counts);
-
-    return {
-      id: Date.now() + Math.random(),
-      type: 'pie',
-      title,
-      component: (
-        <Pie
-          data={{
-            labels,
-            datasets: [{
-              data,
-              backgroundColor: [
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-                '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
-              ]
-            }]
-          }}
-          options={{
-            responsive: true,
-            plugins: {
-              title: { display: true, text: title },
-              legend: { position: 'right' }
-            }
-          }}
-        />
-      )
-    };
-  };
-
-  const createLineChart = (xColumn, yColumn, title) => {
-    const sortedData = dataPreview
-      .map(row => ({ x: row[xColumn], y: row[yColumn] }))
-      .filter(point => point.y !== undefined)
-      .slice(0, 20);
-
-    return {
-      id: Date.now() + Math.random(),
-      type: 'line',
-      title,
-      component: (
-        <Line
-          data={{
-            labels: sortedData.map(d => d.x),
-            datasets: [{
-              label: yColumn,
-              data: sortedData.map(d => d.y),
-              borderColor: 'rgba(255, 99, 132, 1)',
-              backgroundColor: 'rgba(255, 99, 132, 0.2)',
-              tension: 0.4
-            }]
-          }}
-          options={{
-            responsive: true,
-            plugins: {
-              title: { display: true, text: title },
-              legend: { position: 'top' }
-            }
-          }}
-        />
-      )
-    };
-  };
-
-  const createDoughnutChart = (column, title) => {
-    const counts = {};
-    dataPreview.forEach(row => {
-      const value = row[column];
-      counts[value] = (counts[value] || 0) + 1;
-    });
-
-    const labels = Object.keys(counts);
-    const data = Object.values(counts);
-
-    return {
-      id: Date.now() + Math.random(),
-      type: 'doughnut',
-      title,
-      component: (
-        <Doughnut
-          data={{
-            labels,
-            datasets: [{
-              data,
-              backgroundColor: [
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-                '#9966FF', '#FF9F40'
-              ]
-            }]
-          }}
-          options={{
-            responsive: true,
-            plugins: {
-              title: { display: true, text: title },
-              legend: { position: 'bottom' }
-            }
-          }}
-        />
-      )
-    };
-  };
-
-  const deleteReport = (reportId) => {
-    const updatedReports = reports.filter(r => r.id !== reportId);
-    setReports(updatedReports);
-    localStorage.setItem('powerbi_reports', JSON.stringify(updatedReports));
-    if (activeReport?.id === reportId) {
-      setActiveReport(null);
+      msg.remove();
+      
+      // Success message
+      const successMsg = document.createElement('div');
+      successMsg.textContent = '✓ PDF exported successfully!';
+      successMsg.style.cssText = 'position:fixed;top:20px;right:20px;background:#10B981;color:white;padding:12px 24px;border-radius:6px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+      document.body.appendChild(successMsg);
+      setTimeout(() => successMsg.remove(), 3000);
+    } catch (error) {
+      console.error('PDF export error:', error);
+      const errorMsg = document.createElement('div');
+      errorMsg.textContent = '✗ Export failed: ' + error.message;
+      errorMsg.style.cssText = 'position:fixed;top:20px;right:20px;background:#EF4444;color:white;padding:12px 24px;border-radius:6px;z-index:9999;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15)';
+      document.body.appendChild(errorMsg);
+      setTimeout(() => errorMsg.remove(), 5000);
     }
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+S or Cmd+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSaveReport();
+      }
+      // Delete key to remove selected visual
+      if (e.key === 'Delete' && reportState.selectedVisualId) {
+        reportDispatch({ type: reportActions.DELETE_VISUAL, payload: { id: reportState.selectedVisualId } });
+      }
+      // Escape to deselect
+      if (e.key === 'Escape') {
+        reportDispatch({ type: reportActions.SELECT_VISUAL, payload: { id: null } });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportState.selectedVisualId]);
+
+  const generateChartData = (data, columns, types) => {
+    if (!data.length || !columns || !types) return;
+    // Chart data generation logic (currently unused but kept for future use)
   };
 
   if (!uploadResult) {
     return (
       <div className="powerbi-page">
         <div className="page-header">
-          <h1><BarChart3 size={32} />PowerBI Report Generator</h1>
-          <p>Create professional business intelligence reports from your data</p>
+          <h1><BarChart3 size={32} />PowerBI Analytics Dashboard</h1>
+          <p>Real-time data visualization and business intelligence</p>
         </div>
         
         <div className="empty-state">
           <BarChart3 size={64} color="#6B7280" />
           <h3>No Data Available</h3>
-          <p>Upload a dataset to start creating PowerBI-style reports</p>
+          <p>Upload a dataset to start creating real-time analytics</p>
           <button 
             onClick={() => window.location.href = '/'}
             className="btn btn-primary"
@@ -357,134 +321,97 @@ const ImprovedPowerBIPage = () => {
   return (
     <div className="powerbi-page">
       <div className="page-header">
-        <h1><BarChart3 size={32} />PowerBI Report Generator</h1>
-        <p>Create professional business intelligence reports from your data</p>
+        <h1><BarChart3 size={32} />PowerBI Analytics Dashboard</h1>
+        <p>Real-time data visualization and business intelligence</p>
+      </div>
+
+      {/* View Switcher */}
+      <div className="view-switcher">
+        <button 
+          className={`view-btn ${activeView === 'builder' ? 'active' : ''}`}
+          onClick={() => setActiveView('builder')}
+        >
+          <PieChart size={18} />
+          Report Builder
+        </button>
+        <button 
+          className={`view-btn ${activeView === 'model' ? 'active' : ''}`}
+          onClick={() => setActiveView('model')}
+        >
+          <TrendingUp size={18} />
+          Model View
+        </button>
       </div>
 
       <div className="powerbi-workspace">
-        {/* Dataset Info Header */}
-        <div className="dataset-info-header">
-          <div className="dataset-summary">
-            <h3>Dataset: {uploadResult?.filename || uploadResult?.name || 'Unknown'}</h3>
-            <div className="dataset-stats">
-              <span>{uploadResult?.rows?.toLocaleString() || uploadResult?.number_of_rows?.toLocaleString() || 'N/A'} records</span>
-              <span>{uploadResult?.columns || uploadResult?.number_of_columns || uploadResult?.column_names?.length || 'N/A'} features</span>
-              <span>{uploadResult?.document_type || uploadResult?.file_type || 'Unknown'}</span>
-            </div>
-          </div>
-        </div>
-        {/* Left Panel - Report Templates */}
-        <div className="templates-panel">
-          <div className="panel-header">
-            <h3><Layout size={20} />Report Templates</h3>
-          </div>
-          
-          <div className="template-list">
-            {[
-              { name: 'Executive Dashboard', icon: TrendingUp, description: 'High-level KPIs and metrics' },
-              { name: 'Sales Report', icon: BarChart3, description: 'Sales performance analysis' },
-              { name: 'Analytics Report', icon: PieChart, description: 'Detailed data analytics' },
-              { name: 'Custom Report', icon: Grid, description: 'Build your own report' }
-            ].map(template => (
-              <div key={template.name} className="template-item">
-                <div className="template-info">
-                  <template.icon size={20} />
-                  <div>
-                    <h4>{template.name}</h4>
-                    <p>{template.description}</p>
-                  </div>
-                </div>
-                <button 
-                  className="btn btn-primary btn-sm"
-                  onClick={() => generateReport(template.name)}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? <RefreshCw size={14} className="spinning" /> : <Plus size={14} />}
-                  Generate
-                </button>
-              </div>
-            ))}
-          </div>
 
-          <div className="saved-reports">
-            <h4><Save size={16} />Saved Reports ({reports.length})</h4>
-            {reports.map(report => (
-              <div key={report.id} className="saved-report-item">
-                <div className="report-info">
-                  <span className="report-name">{report.name}</span>
-                  <span className="report-date">{new Date(report.created).toLocaleDateString()}</span>
-                </div>
-                <div className="report-actions">
-                  <button 
-                    className="btn-icon"
-                    onClick={() => setActiveReport(report)}
-                    title="View Report"
-                  >
-                    <Eye size={14} />
-                  </button>
-                  <button 
-                    className="btn-icon"
-                    onClick={() => deleteReport(report.id)}
-                    title="Delete Report"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Panel - Report Viewer */}
-        <div className="report-viewer">
-          {activeReport ? (
-            <>
-              <div className="report-header">
-                <div className="report-title">
-                  <h2>{activeReport.name}</h2>
-                  <span className="report-type">{activeReport.type}</span>
-                </div>
-                <div className="report-actions">
-                  <button className="btn btn-secondary">
-                    <Download size={16} />
-                    Export PDF
-                  </button>
-                  <button className="btn btn-secondary">
-                    <Share2 size={16} />
-                    Share
-                  </button>
-                </div>
+        {/* Report Builder View */}
+        {activeView === 'builder' && (
+          <div className="report-builder-view">
+            <div className="builder-workspace">
+              <div className="builder-left">
+                <VisualGallery onAddVisual={(type) => reportDispatch({ type: reportActions.ADD_VISUAL, payload: { type } })} />
               </div>
               
-              <div className="charts-grid">
-                {activeReport.charts.map(chart => (
-                  <div key={chart.id} className="chart-container">
-                    <div className="chart-header">
-                      <h4>{chart.title}</h4>
-                      <div className="chart-actions">
-                        <button className="btn-icon" title="Edit">
-                          <Edit3 size={14} />
-                        </button>
-                        <button className="btn-icon" title="Copy">
-                          <Copy size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="chart-content">
-                      {chart.component}
-                    </div>
+              <div className="builder-center">
+                <div className="builder-header">
+                  <h3>Report Canvas</h3>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn btn-secondary" onClick={handleExportReport}>
+                      <Download size={16} />
+                      Export
+                    </button>
+                    <button className="btn btn-secondary" onClick={handleSaveReport}>
+                      <Save size={16} />
+                      Save Report
+                    </button>
                   </div>
-                ))}
+                </div>
+                <ReportCanvas
+                  visuals={reportState.visuals}
+                  selectedVisualId={reportState.selectedVisualId}
+                  dataset={dataset}
+                  onSelectVisual={(id) => reportDispatch({ type: reportActions.SELECT_VISUAL, payload: { id } })}
+                  onMoveVisual={(id, x, y) => reportDispatch({ type: reportActions.MOVE_VISUAL, payload: { id, x, y } })}
+                  onResizeVisual={(id, w, h) => reportDispatch({ type: reportActions.RESIZE_VISUAL, payload: { id, w, h } })}
+                  onDeleteVisual={(id) => reportDispatch({ type: reportActions.DELETE_VISUAL, payload: { id } })}
+                />
               </div>
-            </>
-          ) : (
-            <div className="no-report-selected">
-              <BarChart3 size={64} color="#6B7280" />
-              <h3>No Report Selected</h3>
-              <p>Generate a new report or select an existing one to view</p>
+              
+              <div className="builder-right">
+                <PropertyEditor
+                  visual={reportState.visuals.find(v => v.id === reportState.selectedVisualId)}
+                  dataset={dataset}
+                  onUpdateDataConfig={(config) => reportDispatch({ 
+                    type: reportActions.UPDATE_DATA_CONFIG, 
+                    payload: { id: reportState.selectedVisualId, config } 
+                  })}
+                  onUpdateStyleConfig={(config) => reportDispatch({ 
+                    type: reportActions.UPDATE_STYLE_CONFIG, 
+                    payload: { id: reportState.selectedVisualId, config } 
+                  })}
+                />
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Model View */}
+        {activeView === 'model' && dataModel && (
+          <div className="model-view">
+            <div className="model-header">
+              <h3>Data Model</h3>
+              <p>Drag tables to reposition. Click column icons to create relationships.</p>
+            </div>
+            
+            <ModelCanvas 
+              dataModel={dataModel} 
+              onMoveTable={handleMoveTable}
+              onAddRelationship={handleAddRelationship}
+              onDeleteRelationship={handleDeleteRelationship}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

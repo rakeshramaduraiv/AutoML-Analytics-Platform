@@ -9,6 +9,7 @@ import ReportPage from './pages/ReportPage';
 import TrainPage from './pages/TrainPage';
 import ImprovedPowerBIPage from './pages/ImprovedPowerBIPage';
 import ImprovedDataPreprocessingPage from './pages/ImprovedDataPreprocessingPage';
+import ReportView from './reports/ReportView';
 import './styles/improved-pages.css';
 import PowerQueryPageClean from './pages/PowerQueryPageClean';
 import './styles/power-query.css';
@@ -48,6 +49,7 @@ function App() {
               <Route path="/predict" element={<PredictionPage />} />
               <Route path="/report" element={<ReportPage />} />
               <Route path="/powerbi" element={<ImprovedPowerBIPage />} />
+              <Route path="/reportbuilder" element={<ReportView />} />
             </Routes>
           </main>
         </div>

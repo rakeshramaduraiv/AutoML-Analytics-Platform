@@ -247,19 +247,19 @@ const ReportPage = () => {
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>File:</label>
             <p style={{ margin: 0, padding: '8px', backgroundColor: 'white', borderRadius: '4px' }}>
-              {uploadResult.filename}
+              {uploadResult.filename || uploadResult.name || 'Unknown'}
             </p>
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Type:</label>
             <p style={{ margin: 0, padding: '8px', backgroundColor: 'white', borderRadius: '4px' }}>
-              {uploadResult.document_type || uploadResult.file_type}
+              {uploadResult.document_type || uploadResult.file_type || uploadResult.type || 'Unknown'}
             </p>
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Size:</label>
             <p style={{ margin: 0, padding: '8px', backgroundColor: 'white', borderRadius: '4px' }}>
-              {uploadResult.size_bytes ? `${(uploadResult.size_bytes / 1024 / 1024).toFixed(2)} MB` : 'N/A'}
+              {uploadResult.size_bytes ? `${(uploadResult.size_bytes / 1024 / 1024).toFixed(2)} MB` : uploadResult.file_size || uploadResult.size || 'N/A'}
             </p>
           </div>
         </div>

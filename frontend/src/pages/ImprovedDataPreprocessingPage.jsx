@@ -13,16 +13,22 @@ const ImprovedDataPreprocessingPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedData, setProcessedData] = useState([]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const stored = localStorage.getItem('uploadResult');
     if (stored) {
       const result = JSON.parse(stored);
       setUploadResult(result);
       generateSampleData(result);
-      analyzeDataQuality(result);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (uploadResult && dataPreview.length > 0) {
+      analyzeDataQuality(uploadResult);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataPreview]);
 
   const generateSampleData = (metadata) => {
     if (!metadata) return;

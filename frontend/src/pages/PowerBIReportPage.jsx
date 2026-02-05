@@ -34,6 +34,7 @@ const PowerBIReportPage = () => {
   const [reports, setReports] = useState([]);
   const [draggedField, setDraggedField] = useState(null);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [viewMode, setViewMode] = useState('edit'); // 'edit' or 'view'
 
   const sampleData = {
     sales: {
@@ -67,10 +68,28 @@ const PowerBIReportPage = () => {
   ];
 
   useEffect(() => {
-    setDatasets(['sales', 'marketing', 'operations']);
-    setSelectedDataset('sales');
-    setDataColumns(sampleData.sales.columns);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const stored = localStorage.getItem('uploadResult');
+    if (stored) {
+      const result = JSON.parse(stored);
+      setSelectedDataset('uploaded');
+      
+      // Generate real data from uploaded file
+      const realData = {
+        columns: result.column_names?.map((name, idx) => ({
+          name,
+          type: result.inferred_column_types?.[name] === 'numeric' || result.data_types?.[name]?.includes('int') || result.data_types?.[name]?.includes('float') ? 'number' : 'text',
+          IconComponent: result.inferred_column_types?.[name] === 'numeric' || result.data_types?.[name]?.includes('int') || result.data_types?.[name]?.includes('float') ? Target : BarChart3
+        })) || sampleData.sales.columns,
+        data: result.preview || sampleData.sales.data
+      };
+      
+      setDataColumns(realData.columns);
+      sampleData.uploaded = realData;
+    } else {
+      setDatasets(['sales', 'marketing', 'operations']);
+      setSelectedDataset('sales');
+      setDataColumns(sampleData.sales.columns);
+    }
   }, []);
 
   const createNewReport = (type) => {
@@ -113,12 +132,19 @@ const PowerBIReportPage = () => {
   const generateChartData = (report) => {
     if (!report.xAxis || !report.yAxis || !selectedDataset) return null;
 
-    const data = sampleData[selectedDataset].data;
-    const labels = data.map(item => item[report.xAxis]);
-    const values = data.map(item => item[report.yAxis]);
+    const data = sampleData[selectedDataset]?.data || [];
+    if (!data.length) return null;
+    
+    const labels = data.map(item => item[report.xAxis] || 'N/A');
+    const values = data.map(item => {
+      const val = item[report.yAxis];
+      return typeof val === 'number' ? val : parseFloat(val) || 0;
+    });
 
     const colorSchemes = {
-      default: ['#0078D4', '#00BCF2', '#40E0D0', '#1BA1E2', '#0050EF']
+      default: ['#0078D4', '#00BCF2', '#40E0D0', '#1BA1E2', '#0050EF'],
+      vibrant: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'],
+      professional: ['#2C3E50', '#3498DB', '#E74C3C', '#F39C12', '#27AE60']
     };
 
     const colors = colorSchemes[report.colorScheme] || colorSchemes.default;
@@ -197,14 +223,19 @@ const PowerBIReportPage = () => {
 
   const renderCard = (report) => {
     if (!report.yAxis || !selectedDataset) return null;
-    const data = sampleData[selectedDataset].data;
-    const values = data.map(item => item[report.yAxis]);
+    const data = sampleData[selectedDataset]?.data || [];
+    const values = data.map(item => {
+      const val = item[report.yAxis];
+      return typeof val === 'number' ? val : parseFloat(val) || 0;
+    });
     const total = values.reduce((sum, val) => sum + val, 0);
+    const avg = values.length ? (total / values.length) : 0;
     
     return (
       <div className="card-visualization">
         <div className="card-value">{total.toLocaleString()}</div>
         <div className="card-label">{report.yAxis}</div>
+        <div className="card-meta">Avg: {avg.toFixed(2)}</div>
       </div>
     );
   };
@@ -212,126 +243,202 @@ const PowerBIReportPage = () => {
   return (
     <div className="powerbi-container">
       <div className="powerbi-header">
-        <h1>Report Generator</h1>
-        <select 
-          value={selectedDataset || ''} 
-          onChange={(e) => setSelectedDataset(e.target.value)}
-        >
-          <option value="">Select Dataset</option>
-          {datasets.map(dataset => (
-            <option key={dataset} value={dataset}>{dataset.toUpperCase()}</option>
-          ))}
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600' }}>Report Generator</h1>
+          <div style={{
+            padding: '4px 12px',
+            backgroundColor: '#F3F4F6',
+            borderRadius: '12px',
+            fontSize: '0.8rem',
+            fontWeight: '600',
+            color: '#6B7280'
+          }}>Editing</div>
+        </div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <select 
+            value={selectedDataset || ''} 
+            onChange={(e) => {
+              setSelectedDataset(e.target.value);
+              setDataColumns(sampleData[e.target.value]?.columns || []);
+            }}
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #D1D5DB',
+              borderRadius: '6px',
+              fontSize: '0.9rem',
+              backgroundColor: 'white',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="">Select Dataset</option>
+            {datasets.map(dataset => (
+              <option key={dataset} value={dataset}>{dataset.toUpperCase()}</option>
+            ))}
+            {localStorage.getItem('uploadResult') && <option value="uploaded">UPLOADED DATA</option>}
+          </select>
+          <button style={{
+            padding: '8px 16px',
+            backgroundColor: viewMode === 'view' ? '#0078D4' : '#6B7280',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '0.9rem',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }} onClick={() => setViewMode(viewMode === 'edit' ? 'view' : 'edit')}>
+            {viewMode === 'edit' ? '👁 View Mode' : '✏️ Edit Mode'}
+          </button>
+          <button style={{
+            padding: '8px 16px',
+            backgroundColor: '#10B981',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '0.9rem',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }} onClick={() => window.print()}>Export</button>
+        </div>
       </div>
 
       <div className="powerbi-workspace">
-        <div className="fields-panel">
-          <h3>Fields</h3>
-          <div className="fields-list">
-            {dataColumns.map(column => (
-              <div
-                key={column.name}
-                className="field-item"
-                draggable
-                onDragStart={() => setDraggedField(column.name)}
-              >
-                <column.IconComponent size={16} />
-                {column.name}
-              </div>
-            ))}
-          </div>
+        {viewMode === 'edit' && (
+          <div className="fields-panel">
+            <h3>Fields</h3>
+            <div className="fields-list">
+              {dataColumns.map(column => (
+                <div
+                  key={column.name}
+                  className="field-item"
+                  draggable
+                  onDragStart={() => setDraggedField(column.name)}
+                >
+                  <column.IconComponent size={16} />
+                  {column.name}
+                </div>
+              ))}
+            </div>
 
-          <h3>Visualizations</h3>
-          <div className="viz-types">
-            {visualizationTypes.map(viz => (
-              <button 
-                key={viz.type}
-                onClick={() => createNewReport(viz.type)} 
-                className="viz-btn"
-              >
-                <viz.IconComponent size={16} />
-                {viz.name}
-              </button>
-            ))}
+            <h3>Visualizations</h3>
+            <div className="viz-types">
+              {visualizationTypes.map(viz => (
+                <button 
+                  key={viz.type}
+                  onClick={() => createNewReport(viz.type)} 
+                  className="viz-btn"
+                >
+                  <viz.IconComponent size={16} />
+                  {viz.name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="report-canvas">
+        <div className="report-canvas" style={{ width: viewMode === 'view' ? '100%' : 'calc(100% - 280px - 280px)' }}>
           {reports.length === 0 ? (
             <div className="empty-canvas">
-              <h2>Start Building Your Report</h2>
-              <p>Select a visualization type from the left panel to begin</p>
+              <h2>{viewMode === 'edit' ? 'Start Building Your Report' : 'No Reports Created'}</h2>
+              <p>{viewMode === 'edit' ? 'Select a visualization type from the left panel to begin' : 'Switch to Edit Mode to create reports'}</p>
             </div>
           ) : (
-            reports.map(report => (
-              <div
-                key={report.id}
-                className={`report-widget ${selectedReport === report.id ? 'selected' : ''}`}
-                style={{
-                  left: report.position.x,
-                  top: report.position.y,
-                  width: report.size.width,
-                  height: report.size.height
-                }}
-                onClick={() => setSelectedReport(report.id)}
-              >
-                <div className="widget-header">
-                  <input
-                    type="text"
-                    value={report.title}
-                    onChange={(e) => updateReport(report.id, { title: e.target.value })}
-                    className="widget-title"
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: viewMode === 'view' ? 'repeat(auto-fit, minmax(500px, 1fr))' : '1fr',
+              gap: '20px',
+              padding: '20px'
+            }}>
+              {reports.map(report => (
+                <div
+                  key={report.id}
+                  className={`report-widget ${selectedReport === report.id ? 'selected' : ''}`}
+                  style={{
+                    position: viewMode === 'view' ? 'relative' : 'absolute',
+                    left: viewMode === 'view' ? 'auto' : report.position.x,
+                    top: viewMode === 'view' ? 'auto' : report.position.y,
+                    width: viewMode === 'view' ? '100%' : report.size.width,
+                    height: viewMode === 'view' ? 'auto' : report.size.height,
+                    minHeight: viewMode === 'view' ? '400px' : 'auto'
+                  }}
+                  onClick={() => viewMode === 'edit' && setSelectedReport(report.id)}
+                >
+                  <div className="widget-header">
+                    <input
+                      type="text"
+                      value={report.title}
+                      onChange={(e) => updateReport(report.id, { title: e.target.value })}
+                      className="widget-title"
+                      disabled={viewMode === 'view'}
+                      style={{ cursor: viewMode === 'view' ? 'default' : 'text' }}
+                    />
+                    {viewMode === 'edit' && (
+                      <button 
+                        onClick={() => deleteReport(report.id)}
+                        className="delete-btn"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {viewMode === 'edit' && (
+                    <div className="drop-zones">
+                      <div
+                        className={`drop-zone ${report.xAxis ? 'filled' : ''}`}
+                        onDrop={(e) => handleDrop(e, report.id, 'xAxis')}
+                        onDragOver={(e) => e.preventDefault()}
+                      >
+                        X-Axis: {report.xAxis || 'Drop field here'}
+                      </div>
+                      <div
+                        className={`drop-zone ${report.yAxis ? 'filled' : ''}`}
+                        onDrop={(e) => handleDrop(e, report.id, 'yAxis')}
+                        onDragOver={(e) => e.preventDefault()}
+                      >
+                        Y-Axis: {report.yAxis || 'Drop field here'}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="widget-chart" style={{ height: viewMode === 'view' ? '350px' : 'calc(100% - 120px)' }}>
+                    {renderChart(report)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {viewMode === 'edit' && (
+          <div className="properties-panel">
+            <h3>Format</h3>
+            {selectedReport ? (
+              <div className="properties-content">
+                <div className="property-group">
+                  <label>Color Scheme</label>
+                  <select
+                    value={reports.find(r => r.id === selectedReport)?.colorScheme || 'default'}
+                    onChange={(e) => updateReport(selectedReport, { colorScheme: e.target.value })}
+                  >
+                    <option value="default">Default</option>
+                    <option value="vibrant">Vibrant</option>
+                    <option value="professional">Professional</option>
+                  </select>
+                </div>
+                <div className="property-group">
+                  <label>Show Legend</label>
+                  <input 
+                    type="checkbox" 
+                    checked={reports.find(r => r.id === selectedReport)?.showLegend !== false}
+                    onChange={(e) => updateReport(selectedReport, { showLegend: e.target.checked })}
                   />
-                  <button 
-                    onClick={() => deleteReport(report.id)}
-                    className="delete-btn"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-
-                <div className="drop-zones">
-                  <div
-                    className={`drop-zone ${report.xAxis ? 'filled' : ''}`}
-                    onDrop={(e) => handleDrop(e, report.id, 'xAxis')}
-                    onDragOver={(e) => e.preventDefault()}
-                  >
-                    X-Axis: {report.xAxis || 'Drop field here'}
-                  </div>
-                  <div
-                    className={`drop-zone ${report.yAxis ? 'filled' : ''}`}
-                    onDrop={(e) => handleDrop(e, report.id, 'yAxis')}
-                    onDragOver={(e) => e.preventDefault()}
-                  >
-                    Y-Axis: {report.yAxis || 'Drop field here'}
-                  </div>
-                </div>
-
-                <div className="widget-chart">
-                  {renderChart(report)}
                 </div>
               </div>
-            ))
-          )}
-        </div>
-
-        <div className="properties-panel">
-          <h3>Format</h3>
-          {selectedReport ? (
-            <div className="properties-content">
-              <div className="property-group">
-                <label>Show Legend</label>
-                <input 
-                  type="checkbox" 
-                  checked={reports.find(r => r.id === selectedReport)?.showLegend !== false}
-                  onChange={(e) => updateReport(selectedReport, { showLegend: e.target.checked })}
-                />
-              </div>
-            </div>
-          ) : (
-            <p>Select a visual to format</p>
-          )}
-        </div>
+            ) : (
+              <p>Select a visual to format</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
